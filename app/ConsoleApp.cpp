@@ -26,6 +26,8 @@ void ConsoleApp::run() {
             switch (choice) {
             case 1: vehicleMenu(); break;
             case 2: customerMenu(); break;
+            case 3: quoteMenu(); break;
+            case 4: bookingMenu(); break;
             case 0: io_.info("Goodbye."); return;
             default: io_.info("This menu arrives in a later milestone."); break;
             }

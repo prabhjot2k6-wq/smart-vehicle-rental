@@ -41,6 +41,22 @@ private:
     void updateCustomer();
     DrivingLicence askLicence(const DrivingLicence* current);
 
+    // ---- 3. Search & quotes, 4. Bookings (ConsoleBooking.cpp) ----
+    void quoteMenu();
+    void searchAvailability();
+    void createQuote();
+    void confirmPendingQuote();
+    void listPendingQuotes();
+    void pricingSettings();
+    void bookingMenu();
+    void listBookings();
+    void viewBooking();
+    void extendBooking();
+    void cancelBooking();
+    void printBreakdown(const PriceBreakdown& breakdown);
+    void printBookingSummary(const Booking& booking);
+    std::string askBookingId();
+
     // ---- shared pickers ----
     std::string pickModelId();
     std::string askVehicleId();

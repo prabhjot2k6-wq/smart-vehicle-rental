@@ -70,6 +70,13 @@ void FleetService::updateNextServiceDue(const std::string& vehicleId, long long 
 
 void FleetService::deactivateVehicle(const std::string& vehicleId) {
     Vehicle& v = data_.vehicles.get(vehicleId);
+    for (const Booking* b : data_.bookings.all()) {
+        if (b->vehicleId() == vehicleId && b->occupiesVehicle()) {
+            throw ConflictError("Vehicle " + vehicleId + " has " + toString(b->status()) + " booking " + b->id() +
+                                ". Cancel or complete it before deactivating.");
+        }
+    }
+    // Only the status changes: past bookings and invoices stay untouched.
     v.deactivate();
 }
 

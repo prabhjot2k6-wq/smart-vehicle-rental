@@ -3,29 +3,44 @@
 // service, wiring them together. It holds no business rules itself - each
 // rule lives in the one service responsible for it.
 
+#include "rental/AvailabilityService.h"
+#include "rental/Clock.h"
 #include "rental/CustomerService.h"
 #include "rental/FleetService.h"
+#include "rental/QuoteService.h"
 #include "rental/RentalData.h"
+#include "rental/RentalService.h"
 
 namespace rental {
 
 class RentalSystem {
 public:
-    explicit RentalSystem(RentalData data);
+    // The clock must outlive the system (SystemClock in the app, ManualClock in tests).
+    RentalSystem(RentalData data, const Clock& clock);
 
-    // Services keep references into data_, so the system must not move.
+    // Services keep references into data_, so the system must not move or copy.
     RentalSystem(const RentalSystem&) = delete;
     RentalSystem& operator=(const RentalSystem&) = delete;
 
     RentalData& data() { return data_; }
     const RentalData& data() const { return data_; }
+    const Clock& clock() const { return clock_; }
+
     FleetService& fleet() { return fleet_; }
     CustomerService& customers() { return customers_; }
+    AvailabilityService& availability() { return availability_; }
+    QuoteService& quotes() { return quotes_; }
+    RentalService& rentals() { return rentals_; }
 
 private:
-    RentalData data_; // declared first: constructed before the services that use it
+    // Declaration order = construction order: data first, then services.
+    RentalData data_;
+    const Clock& clock_;
     FleetService fleet_;
     CustomerService customers_;
+    AvailabilityService availability_;
+    QuoteService quotes_;
+    RentalService rentals_;
 };
 
 } // namespace rental

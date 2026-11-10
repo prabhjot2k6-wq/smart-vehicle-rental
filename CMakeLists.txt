@@ -25,6 +25,14 @@ add_library(rental_core STATIC
     src/FleetService.cpp
     src/CustomerService.cpp
     src/RentalSystem.cpp
+    src/Clock.cpp
+    src/PricingRules.cpp
+    src/PricingStrategy.cpp
+    src/InspectionReport.cpp
+    src/Booking.cpp
+    src/AvailabilityService.cpp
+    src/QuoteService.cpp
+    src/RentalService.cpp
 )
 target_include_directories(rental_core PUBLIC include)
 
@@ -33,6 +41,7 @@ add_executable(rental_app
     app/main.cpp
     app/ConsoleIO.cpp
     app/ConsoleApp.cpp
+    app/ConsoleBooking.cpp
 )
 target_link_libraries(rental_app PRIVATE rental_core)
 
@@ -42,6 +51,8 @@ add_executable(rental_tests
     tests/test_main.cpp
     tests/test_domain.cpp
     tests/test_fleet.cpp
+    tests/test_pricing.cpp
+    tests/test_booking.cpp
 )
 target_link_libraries(rental_tests PRIVATE rental_core)
 add_test(NAME rental_tests COMMAND rental_tests)

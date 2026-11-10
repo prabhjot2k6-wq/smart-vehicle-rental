@@ -2,12 +2,13 @@
 
 #include "TestFramework.h"
 
-#include "rental/RentalSystem.h"
+#include "TestHelpers.h"
 
 using namespace rental;
 
 TEST_CASE("fleet: IDs are generated and duplicate registrations rejected") {
-    RentalSystem sys{RentalData{}};
+    ManualClock clock(Date::parse("2026-11-09"));
+    RentalSystem sys(RentalData{}, clock);
     const auto& swift = sys.fleet().addModel("Maruti", "Swift", VehicleCategory::Car, Money::fromRupees(1500));
     CHECK_EQ(swift.id(), std::string("M-0001"));
     const auto& v1 = sys.fleet().addVehicle(swift.id(), "MH12 AB 1001", FuelType::Petrol, 100, 5);
@@ -23,7 +24,8 @@ TEST_CASE("fleet: IDs are generated and duplicate registrations rejected") {
 }
 
 TEST_CASE("fleet: vehicle type follows the model category, many vehicles share one model") {
-    RentalSystem sys{RentalData{}};
+    ManualClock clock(Date::parse("2026-11-09"));
+    RentalSystem sys(RentalData{}, clock);
     const auto& activa = sys.fleet().addModel("Honda", "Activa", VehicleCategory::Bike, Money::fromRupees(500));
     const auto& b1 = sys.fleet().addVehicle(activa.id(), "KA01BK0001", FuelType::Petrol, 0, 110);
     const auto& b2 = sys.fleet().addVehicle(activa.id(), "KA01BK0002", FuelType::Petrol, 0, 110);
@@ -33,7 +35,8 @@ TEST_CASE("fleet: vehicle type follows the model category, many vehicles share o
 }
 
 TEST_CASE("customers: unique licence numbers") {
-    RentalSystem sys{RentalData{}};
+    ManualClock clock(Date::parse("2026-11-09"));
+    RentalSystem sys(RentalData{}, clock);
     const DrivingLicence lic("DEMO-1", Date::parse("2030-01-01"), {VehicleCategory::Car});
     const auto& c = sys.customers().registerCustomer("Asha Rao", "+91 90000 00001", "asha@example.com", lic);
     CHECK_EQ(c.id(), std::string("C-0001"));
