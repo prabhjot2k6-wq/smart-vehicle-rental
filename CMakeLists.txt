@@ -21,12 +21,18 @@ add_library(rental_core STATIC
     src/Vehicle.cpp
     src/VehicleTypes.cpp
     src/Customer.cpp
+    src/Repository.cpp
+    src/FleetService.cpp
+    src/CustomerService.cpp
+    src/RentalSystem.cpp
 )
 target_include_directories(rental_core PUBLIC include)
 
 # Console application.
 add_executable(rental_app
     app/main.cpp
+    app/ConsoleIO.cpp
+    app/ConsoleApp.cpp
 )
 target_link_libraries(rental_app PRIVATE rental_core)
 
@@ -35,6 +41,7 @@ enable_testing()
 add_executable(rental_tests
     tests/test_main.cpp
     tests/test_domain.cpp
+    tests/test_fleet.cpp
 )
 target_link_libraries(rental_tests PRIVATE rental_core)
 add_test(NAME rental_tests COMMAND rental_tests)
