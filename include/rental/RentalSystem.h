@@ -7,6 +7,7 @@
 #include "rental/Clock.h"
 #include "rental/CustomerService.h"
 #include "rental/FleetService.h"
+#include "rental/MaintenanceService.h"
 #include "rental/QuoteService.h"
 #include "rental/RentalData.h"
 #include "rental/RentalService.h"
@@ -31,6 +32,7 @@ public:
     AvailabilityService& availability() { return availability_; }
     QuoteService& quotes() { return quotes_; }
     RentalService& rentals() { return rentals_; }
+    MaintenanceService& maintenance() { return maintenance_; }
 
 private:
     // Declaration order = construction order: data first, then services.
@@ -40,7 +42,9 @@ private:
     CustomerService customers_;
     AvailabilityService availability_;
     QuoteService quotes_;
+    ChargeCalculator charges_;
     RentalService rentals_;
+    MaintenanceService maintenance_;
 };
 
 } // namespace rental

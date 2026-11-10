@@ -27,7 +27,7 @@ public:
     std::ostream& out() { return out_; }
 
     std::string askText(const std::string& prompt);                              // non-empty
-    std::string askOptionalText(const std::string& prompt);                      // may be empty
+    std::string askOptionalText(const std::string& prompt, const std::string& hint = "blank = any"); // may be empty
     std::string askTextDefault(const std::string& prompt, const std::string& current); // blank keeps current
     long long askInt(const std::string& prompt, long long min, long long max);
     long long askIntDefault(const std::string& prompt, long long min, long long max, long long current);

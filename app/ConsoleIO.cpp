@@ -34,8 +34,8 @@ std::string ConsoleIO::askText(const std::string& prompt) {
     }
 }
 
-std::string ConsoleIO::askOptionalText(const std::string& prompt) {
-    return readLine(prompt + " (blank = any)");
+std::string ConsoleIO::askOptionalText(const std::string& prompt, const std::string& hint) {
+    return readLine(prompt + " (" + hint + ")");
 }
 
 std::string ConsoleIO::askTextDefault(const std::string& prompt, const std::string& current) {

@@ -28,6 +28,8 @@ void ConsoleApp::run() {
             case 2: customerMenu(); break;
             case 3: quoteMenu(); break;
             case 4: bookingMenu(); break;
+            case 5: operationsMenu(); break;
+            case 6: maintenanceMenu(); break;
             case 0: io_.info("Goodbye."); return;
             default: io_.info("This menu arrives in a later milestone."); break;
             }

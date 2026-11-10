@@ -11,6 +11,8 @@ RentalSystem::RentalSystem(RentalData data, const Clock& clock)
       customers_(data_),
       availability_(data_),
       quotes_(data_, availability_, clock_, std::make_unique<DynamicPricingStrategy>()),
-      rentals_(data_, availability_, quotes_, clock_) {}
+      charges_(data_.chargeRules),
+      rentals_(data_, availability_, quotes_, charges_, clock_),
+      maintenance_(data_, availability_) {}
 
 } // namespace rental

@@ -57,6 +57,20 @@ private:
     void printBookingSummary(const Booking& booking);
     std::string askBookingId();
 
+    // ---- 5. Pickup & return, 6. Maintenance (ConsoleOperations.cpp) ----
+    void operationsMenu();
+    void collectVehicle();
+    void returnVehicle();
+    void viewInvoice();
+    void listInvoices();
+    void printInvoice(const Invoice& invoice);
+    InspectionReport askInspection(const Vehicle& vehicle, long long minimumOdometer, int defaultFuel);
+    void maintenanceMenu();
+    void listMaintenance();
+    void openMaintenance();
+    void completeMaintenance();
+    void serviceWarnings();
+
     // ---- shared pickers ----
     std::string pickModelId();
     std::string askVehicleId();
