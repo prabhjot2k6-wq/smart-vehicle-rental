@@ -11,16 +11,17 @@ namespace rental {
 
 void ConsoleApp::run() {
     io_.info("Smart Vehicle Rental Management System (educational demo - synthetic data, simulated payments)");
-    io_.info("Tip: type 'cancel' at any prompt to go back.");
+    io_.info("Today is " + sys_.clock().today().toString() + ". Type 'cancel' at any prompt to go back.");
+    if (store_) io_.info("Data file: " + store_->path().string() + " (saved automatically after every change).");
     while (true) {
         int choice = 0;
         try {
             choice = io_.menu("Main menu",
                               {"Vehicle management", "Customer management", "Availability search and price quotes",
-                               "Booking management", "Pickup and return", "Maintenance", "Reports"},
+                               "Booking management", "Pickup and return", "Maintenance", "Reports", "Save and exit"},
                               "Exit");
         } catch (const InputClosed&) {
-            choice = 0;
+            choice = 8;
         }
         try {
             switch (choice) {
@@ -30,10 +31,18 @@ void ConsoleApp::run() {
             case 4: bookingMenu(); break;
             case 5: operationsMenu(); break;
             case 6: maintenanceMenu(); break;
-            case 0: io_.info("Goodbye."); return;
-            default: io_.info("This menu arrives in a later milestone."); break;
+            case 7: reportsMenu(); break;
+            case 0:
+            case 8:
+                if (saveNow() || io_.confirm("Saving failed. Exit anyway and lose unsaved changes?")) {
+                    io_.info("Goodbye.");
+                    return;
+                }
+                break;
+            default: break;
             }
         } catch (const InputClosed&) {
+            saveNow();
             io_.info("Input closed. Goodbye.");
             return;
         }
@@ -50,7 +59,23 @@ void ConsoleApp::runAction(const std::function<void()>& action) {
     }
 }
 
-void ConsoleApp::dataChanged() {}
+void ConsoleApp::dataChanged() {
+    unsaved_ = true;
+    saveNow();
+}
+
+bool ConsoleApp::saveNow() {
+    if (!store_ || !unsaved_) return true;
+    try {
+        store_->save(sys_.data());
+        unsaved_ = false;
+        return true;
+    } catch (const std::exception& e) {
+        io_.error(std::string("Could not save: ") + e.what());
+        io_.error("Your changes are still in memory. Fix the problem, then choose 'Save and exit'.");
+        return false;
+    }
+}
 
 // ===================================================================== pickers
 VehicleCategory ConsoleApp::askCategory() {

@@ -4,6 +4,7 @@
 // rule is broken, the service throws and the menu prints the message.
 
 #include "ConsoleIO.h"
+#include "rental/DataStore.h"
 #include "rental/RentalSystem.h"
 
 #include <functional>
@@ -14,14 +15,16 @@ namespace rental {
 
 class ConsoleApp {
 public:
-    ConsoleApp(RentalSystem& system, ConsoleIO& io) : sys_(system), io_(io) {}
+    // `store` may be null (nothing is saved), e.g. for experiments.
+    ConsoleApp(RentalSystem& system, ConsoleIO& io, const DataStore* store) : sys_(system), io_(io), store_(store) {}
     void run();
 
 private:
     // Runs one menu action: catches rule violations / cancellation and
     // reports them, so a mistake never ends the program.
     void runAction(const std::function<void()>& action);
-    void dataChanged(); // hook for saving (persistence added in milestone 6)
+    void dataChanged(); // saves after every successful change
+    bool saveNow();
 
     // ---- 1. Vehicles (ConsoleApp.cpp) ----
     void vehicleMenu();
@@ -71,6 +74,13 @@ private:
     void completeMaintenance();
     void serviceWarnings();
 
+    // ---- 7. Reports (ConsoleReports.cpp) ----
+    void reportsMenu();
+    void fleetReport();
+    void activeRentalsReport();
+    void maintenanceDueReport();
+    void revenueReport();
+
     // ---- shared pickers ----
     std::string pickModelId();
     std::string askVehicleId();
@@ -80,6 +90,8 @@ private:
 
     RentalSystem& sys_;
     ConsoleIO& io_;
+    const DataStore* store_;
+    bool unsaved_ = false;
 };
 
 } // namespace rental

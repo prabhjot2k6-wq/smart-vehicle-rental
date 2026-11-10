@@ -11,6 +11,7 @@
 #include "rental/QuoteService.h"
 #include "rental/RentalData.h"
 #include "rental/RentalService.h"
+#include "rental/ReportService.h"
 
 namespace rental {
 
@@ -33,6 +34,7 @@ public:
     QuoteService& quotes() { return quotes_; }
     RentalService& rentals() { return rentals_; }
     MaintenanceService& maintenance() { return maintenance_; }
+    const ReportService& reports() const { return reports_; }
 
 private:
     // Declaration order = construction order: data first, then services.
@@ -45,6 +47,7 @@ private:
     ChargeCalculator charges_;
     RentalService rentals_;
     MaintenanceService maintenance_;
+    ReportService reports_;
 };
 
 } // namespace rental
