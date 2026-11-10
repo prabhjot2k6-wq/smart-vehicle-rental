@@ -179,3 +179,19 @@ TEST_CASE("pricing: demand is calculated separately for each day") {
     CHECK_EQ(p.days()[1].demandFactorBp, BasisPoints{9000});
     CHECK_EQ(p.total(), Money::fromRupees(1725 + 1350));
 }
+
+TEST_CASE("pricing: the worked example in docs/DESIGN.md is exactly what the engine produces") {
+    Fleet f;
+    f.sys.data().pricingRules.addHoliday(D("2026-12-25"));
+    f.clock.setToday(D("2026-12-01"));
+    f.book(f.innovas[1], R("2026-12-26", "2026-12-28")); // the other Innova: Sat + Sun
+    const auto p = f.sys.quotes().priceFor(f.sys.fleet().vehicle(f.innovas[0]), R("2026-12-24", "2026-12-31"));
+    const std::vector<Money> expected = {Money::fromRupees(3150), Money::fromPaise(362250), Money::fromRupees(3850),
+                                         Money::fromRupees(3850), Money::fromRupees(3150), Money::fromRupees(3150),
+                                         Money::fromRupees(3150)};
+    CHECK_EQ(p.days().size(), expected.size());
+    for (std::size_t i = 0; i < expected.size() && i < p.days().size(); ++i) CHECK_EQ(p.days()[i].amount, expected[i]);
+    CHECK_EQ(p.subtotal(), Money::fromPaise(2392250));
+    CHECK_EQ(p.discount(), Money::fromPaise(239225));
+    CHECK_EQ(p.total(), Money::fromPaise(2153025));
+}
