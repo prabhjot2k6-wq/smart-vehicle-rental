@@ -66,3 +66,15 @@ add_executable(rental_tests
 )
 target_link_libraries(rental_tests PRIVATE rental_core)
 add_test(NAME rental_tests COMMAND rental_tests)
+
+# Local HTTP API: serves the browser frontend and routes writes through the
+# same RentalSystem services used by the console application.
+find_package(Boost REQUIRED)
+add_executable(rental_api api_server.cpp)
+target_include_directories(rental_api PRIVATE ${Boost_INCLUDE_DIRS})
+target_link_libraries(rental_api PRIVATE rental_core)
+target_compile_definitions(rental_api PRIVATE BOOST_ERROR_CODE_HEADER_ONLY BOOST_SYSTEM_NO_DEPRECATED)
+
+if(WIN32)
+    target_link_libraries(rental_api PRIVATE ws2_32 mswsock)
+endif()
