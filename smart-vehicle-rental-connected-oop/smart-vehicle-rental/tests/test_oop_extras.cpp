@@ -12,6 +12,7 @@
 #include <filesystem>
 #include <fstream>
 #include <sstream>
+#include <chrono>
 
 using namespace rental;
 using namespace testhelp;
@@ -189,7 +190,11 @@ TEST_CASE("observer: a failed action is not announced, and a broken observer can
 
 TEST_CASE("observer: AuditLogger keeps newest-first history and writes a log file") {
     Fleet f;
-    const std::filesystem::path file = std::filesystem::temp_directory_path() / "svrms_audit_test.txt";
+    const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+
+    const std::filesystem::path file =
+    std::filesystem::temp_directory_path() /
+    ("svrms_audit_test_" + std::to_string(stamp) + ".txt");
     std::filesystem::remove(file);
     auto audit = std::make_shared<AuditLogger>(f.sys.data(), file, 3);
     f.sys.rentals().addObserver(audit);
