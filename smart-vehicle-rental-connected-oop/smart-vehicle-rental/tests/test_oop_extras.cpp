@@ -211,7 +211,9 @@ TEST_CASE("observer: AuditLogger keeps newest-first history and writes a log fil
     std::string line;
     int lines = 0;
     while (std::getline(in, line)) ++lines;
-    CHECK_EQ(lines, 5); // the file keeps everything
+    CHECK_EQ(lines, 5);
+    in.close();
+ // the file keeps everything
     std::filesystem::remove(file);
 }
 
