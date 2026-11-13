@@ -13,10 +13,16 @@ void CustomerService::requireUniqueLicence(const std::string& licenceNumber,
 
 const Customer& CustomerService::registerCustomer(const std::string& name, const std::string& phone,
                                                   const std::string& email, const DrivingLicence& licence) {
+    return registerCustomer(CustomerType::Regular, name, phone, email, licence);
+}
+
+const Customer& CustomerService::registerCustomer(CustomerType type, const std::string& name, const std::string& phone,
+                                                  const std::string& email, const DrivingLicence& licence) {
     requireUniqueLicence(licence.number(), "");
-    Customer probe("pending", name, phone, email, licence); // validates before an ID is used
-    return data_.customers.add(
-        Customer(data_.ids.next("C"), probe.name(), probe.phone(), probe.email(), probe.licence()));
+    // Build a probe first: it validates name/phone/email before an ID is used up.
+    auto probe = CustomerFactory::create(type, "pending", name, phone, email, licence);
+    return data_.customers.add(CustomerFactory::create(type, data_.ids.next("C"), probe->name(), probe->phone(),
+                                                       probe->email(), probe->licence()));
 }
 
 void CustomerService::updateContact(const std::string& customerId, const std::string& name,

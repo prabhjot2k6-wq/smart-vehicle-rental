@@ -39,6 +39,9 @@ add_library(rental_core STATIC
     src/ReportService.cpp
     src/DataStore.cpp
     src/DemoData.cpp
+    src/BookingObserver.cpp
+    src/AuditLogger.cpp
+    src/NotificationService.cpp
 )
 target_include_directories(rental_core PUBLIC include)
 
@@ -63,6 +66,7 @@ add_executable(rental_tests
     tests/test_booking.cpp
     tests/test_operations.cpp
     tests/test_persistence.cpp
+    tests/test_oop_extras.cpp
 )
 target_link_libraries(rental_tests PRIVATE rental_core)
 add_test(NAME rental_tests COMMAND rental_tests)

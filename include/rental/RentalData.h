@@ -18,7 +18,7 @@ namespace rental {
 struct RentalData {
     Repository<VehicleModel> models{"Vehicle model"};
     VehicleRepository vehicles;
-    Repository<Customer> customers{"Customer"};
+    CustomerRepository customers;
     Repository<Booking> bookings{"Booking"};
     Repository<Invoice> invoices{"Invoice"};
     Repository<MaintenanceRecord> maintenance{"Maintenance record"};

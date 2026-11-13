@@ -5,6 +5,8 @@
 
 #include "rental/Vehicle.h"
 
+#include <functional>
+#include <map>
 #include <memory>
 
 namespace rental {
@@ -51,8 +53,28 @@ private:
     int payloadKg_ = 0;
 };
 
-// Factory: builds the right derived type from a category. Used when adding a
-// vehicle and when reloading from the data file.
+// FACTORY PATTERN. VehicleFactory knows how to build every kind of vehicle.
+// Callers (FleetService, DataStore) just say WHICH category they want and get
+// back a Vehicle; they never name Car/Bike/Van themselves. Creators are kept
+// in a registry, so a new vehicle type can be plugged in with registerCreator()
+// without editing any existing code (Open/Closed principle).
+class VehicleFactory {
+public:
+    using Creator = std::function<std::unique_ptr<Vehicle>(const VehicleData&, int specValue)>;
+
+    // The shared factory, pre-loaded with Car, Bike and Van.
+    static VehicleFactory& instance();
+
+    void registerCreator(VehicleCategory category, Creator creator);
+    bool knows(VehicleCategory category) const { return creators_.count(category) > 0; }
+    std::unique_ptr<Vehicle> create(VehicleCategory category, const VehicleData& data, int specValue) const;
+
+private:
+    VehicleFactory();
+    std::map<VehicleCategory, Creator> creators_;
+};
+
+// Convenience wrapper kept for existing callers.
 std::unique_ptr<Vehicle> makeVehicle(VehicleCategory category, const VehicleData& data, int specValue);
 
 } // namespace rental

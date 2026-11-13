@@ -60,7 +60,7 @@ With Visual Studio add `-C Release`.
 
 **Verified in the development environment** (Linux, GCC 13.3, CMake 3.28):
 CMake build with zero compiler warnings, CTest passing (it runs `rental_tests`,
-which contains 49 test cases, all passing), the direct
+which contains 60 test cases, all passing), the direct
 `g++` commands above, a clang++ warning check, and a test run under
 AddressSanitizer + UndefinedBehaviorSanitizer. Windows and macOS builds were
 **not** run; the code uses only portable standard C++ (the one OS-specific call,
@@ -153,7 +153,7 @@ CMakeLists.txt
 include/rental/      public headers (domain model, services, persistence)
 src/                 implementations (no console I/O here)
 app/                 console UI: ConsoleIO (input/tables) + ConsoleApp (menus)
-tests/               dependency-free test framework + 49 tests (CTest)
+tests/               dependency-free test framework + 60 tests (CTest)
 docs/                DESIGN.md, VIVA_GUIDE.md
 ```
 

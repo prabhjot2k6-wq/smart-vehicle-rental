@@ -51,6 +51,40 @@ std::vector<const Vehicle*> VehicleRepository::all() const {
     return out;
 }
 
+Customer& CustomerRepository::add(std::unique_ptr<Customer> customer) {
+    if (!customer) throw ValidationError("Cannot add an empty customer.");
+    const std::string id = customer->id();
+    if (items_.count(id) != 0) throw ConflictError("Customer ID " + id + " already exists.");
+    return *items_.emplace(id, std::move(customer)).first->second;
+}
+
+Customer* CustomerRepository::find(const std::string& id) {
+    auto it = items_.find(id);
+    return it == items_.end() ? nullptr : it->second.get();
+}
+
+const Customer* CustomerRepository::find(const std::string& id) const {
+    auto it = items_.find(id);
+    return it == items_.end() ? nullptr : it->second.get();
+}
+
+Customer& CustomerRepository::get(const std::string& id) {
+    if (Customer* c = find(id)) return *c;
+    throw NotFoundError("Customer " + id + " not found.");
+}
+
+const Customer& CustomerRepository::get(const std::string& id) const {
+    if (const Customer* c = find(id)) return *c;
+    throw NotFoundError("Customer " + id + " not found.");
+}
+
+std::vector<const Customer*> CustomerRepository::all() const {
+    std::vector<const Customer*> out;
+    out.reserve(items_.size());
+    for (const auto& entry : items_) out.push_back(entry.second.get());
+    return out;
+}
+
 std::string IdGenerator::next(const std::string& prefix) {
     const long long n = ++lastIssued_[prefix];
     std::string digits = std::to_string(n);

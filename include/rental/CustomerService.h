@@ -13,8 +13,12 @@ class CustomerService {
 public:
     explicit CustomerService(RentalData& data) : data_(data) {}
 
+    // Registers a Regular customer (the default kind).
     const Customer& registerCustomer(const std::string& name, const std::string& phone, const std::string& email,
                                      const DrivingLicence& licence);
+    // Same, but for a chosen kind: Regular, Premium or Corporate.
+    const Customer& registerCustomer(CustomerType type, const std::string& name, const std::string& phone,
+                                     const std::string& email, const DrivingLicence& licence);
     void updateContact(const std::string& customerId, const std::string& name, const std::string& phone,
                        const std::string& email);
     void updateLicence(const std::string& customerId, const DrivingLicence& licence);

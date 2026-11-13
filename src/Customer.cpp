@@ -77,4 +77,20 @@ void Customer::updateContact(const std::string& name, const std::string& phone, 
     email_ = std::move(e);
 }
 
+std::unique_ptr<Customer> CustomerFactory::create(CustomerType type, std::string id, std::string name,
+                                                  std::string phone, std::string email, DrivingLicence licence) {
+    switch (type) {
+    case CustomerType::Regular:
+        return std::make_unique<RegularCustomer>(std::move(id), std::move(name), std::move(phone), std::move(email),
+                                                 std::move(licence));
+    case CustomerType::Premium:
+        return std::make_unique<PremiumCustomer>(std::move(id), std::move(name), std::move(phone), std::move(email),
+                                                 std::move(licence));
+    case CustomerType::Corporate:
+        return std::make_unique<CorporateCustomer>(std::move(id), std::move(name), std::move(phone),
+                                                   std::move(email), std::move(licence));
+    }
+    throw ValidationError("Unknown customer type.");
+}
+
 } // namespace rental

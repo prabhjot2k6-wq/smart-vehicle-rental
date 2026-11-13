@@ -37,13 +37,35 @@ void Van::setSpecValue(int kg) {
 }
 
 // ---------------- Factory ----------------
+
+VehicleFactory::VehicleFactory() {
+    registerCreator(VehicleCategory::Car,
+                    [](const VehicleData& d, int spec) { return std::make_unique<Car>(d, spec); });
+    registerCreator(VehicleCategory::Bike,
+                    [](const VehicleData& d, int spec) { return std::make_unique<Bike>(d, spec); });
+    registerCreator(VehicleCategory::Van,
+                    [](const VehicleData& d, int spec) { return std::make_unique<Van>(d, spec); });
+}
+
+VehicleFactory& VehicleFactory::instance() {
+    static VehicleFactory factory;
+    return factory;
+}
+
+void VehicleFactory::registerCreator(VehicleCategory category, Creator creator) {
+    if (!creator) throw ValidationError("A vehicle creator function is required.");
+    creators_[category] = std::move(creator);
+}
+
+std::unique_ptr<Vehicle> VehicleFactory::create(VehicleCategory category, const VehicleData& data,
+                                                int specValue) const {
+    auto it = creators_.find(category);
+    if (it == creators_.end()) throw ValidationError("Unknown vehicle category.");
+    return it->second(data, specValue);
+}
+
 std::unique_ptr<Vehicle> makeVehicle(VehicleCategory category, const VehicleData& data, int specValue) {
-    switch (category) {
-    case VehicleCategory::Car: return std::make_unique<Car>(data, specValue);
-    case VehicleCategory::Bike: return std::make_unique<Bike>(data, specValue);
-    case VehicleCategory::Van: return std::make_unique<Van>(data, specValue);
-    }
-    throw ValidationError("Unknown vehicle category.");
+    return VehicleFactory::instance().create(category, data, specValue);
 }
 
 } // namespace rental

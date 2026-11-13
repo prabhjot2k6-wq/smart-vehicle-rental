@@ -1,0 +1,84 @@
+cmake_minimum_required(VERSION 3.16)
+project(SmartVehicleRental VERSION 1.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+if(MSVC)
+    add_compile_options(/W4 /permissive- /utf-8 /EHsc)
+else()
+    add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+# Core library: all domain objects, services and persistence. No console I/O.
+add_library(rental_core STATIC
+    src/Money.cpp
+    src/Date.cpp
+    src/Enums.cpp
+    src/TextUtil.cpp
+    src/VehicleModel.cpp
+    src/Vehicle.cpp
+    src/VehicleTypes.cpp
+    src/Customer.cpp
+    src/Repository.cpp
+    src/FleetService.cpp
+    src/CustomerService.cpp
+    src/RentalSystem.cpp
+    src/Clock.cpp
+    src/PricingRules.cpp
+    src/PricingStrategy.cpp
+    src/InspectionReport.cpp
+    src/Booking.cpp
+    src/AvailabilityService.cpp
+    src/QuoteService.cpp
+    src/RentalService.cpp
+    src/Invoice.cpp
+    src/ChargeCalculator.cpp
+    src/MaintenanceService.cpp
+    src/ReportService.cpp
+    src/DataStore.cpp
+    src/DemoData.cpp
+    src/BookingObserver.cpp
+    src/AuditLogger.cpp
+    src/NotificationService.cpp
+)
+target_include_directories(rental_core PUBLIC include)
+
+# Console application.
+add_executable(rental_app
+    app/main.cpp
+    app/ConsoleIO.cpp
+    app/ConsoleApp.cpp
+    app/ConsoleBooking.cpp
+    app/ConsoleOperations.cpp
+    app/ConsoleReports.cpp
+)
+target_link_libraries(rental_app PRIVATE rental_core)
+
+# Automated tests (no external framework), registered with CTest.
+enable_testing()
+add_executable(rental_tests
+    tests/test_main.cpp
+    tests/test_domain.cpp
+    tests/test_fleet.cpp
+    tests/test_pricing.cpp
+    tests/test_booking.cpp
+    tests/test_operations.cpp
+    tests/test_persistence.cpp
+    tests/test_oop_extras.cpp
+)
+target_link_libraries(rental_tests PRIVATE rental_core)
+add_test(NAME rental_tests COMMAND rental_tests)
+
+# Local HTTP API: serves the browser frontend and routes writes through the
+# same RentalSystem services used by the console application.
+find_package(Boost REQUIRED)
+add_executable(rental_api api_server.cpp)
+target_include_directories(rental_api PRIVATE ${Boost_INCLUDE_DIRS})
+target_link_libraries(rental_api PRIVATE rental_core)
+target_compile_definitions(rental_api PRIVATE BOOST_ERROR_CODE_HEADER_ONLY BOOST_SYSTEM_NO_DEPRECATED)
+
+if(WIN32)
+    target_link_libraries(rental_api PRIVATE ws2_32 mswsock)
+endif()

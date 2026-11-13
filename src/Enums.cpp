@@ -49,6 +49,12 @@ const NameTable<InvoiceStatus>& invoiceStatusNames() {
                                                {InvoiceStatus::Finalized, "Finalized"}};
     return t;
 }
+const NameTable<CustomerType>& customerTypeNames() {
+    static const NameTable<CustomerType> t = {{CustomerType::Regular, "Regular"},
+                                              {CustomerType::Premium, "Premium"},
+                                              {CustomerType::Corporate, "Corporate"}};
+    return t;
+}
 
 std::string lower(std::string s) {
     std::transform(s.begin(), s.end(), s.begin(),
@@ -83,6 +89,7 @@ std::string toString(VehicleStatus v) { return nameOf(vehicleStatusNames(), v); 
 std::string toString(BookingStatus v) { return nameOf(bookingStatusNames(), v); }
 std::string toString(MaintenanceStatus v) { return nameOf(maintenanceStatusNames(), v); }
 std::string toString(InvoiceStatus v) { return nameOf(invoiceStatusNames(), v); }
+std::string toString(CustomerType v) { return nameOf(customerTypeNames(), v); }
 
 VehicleCategory parseVehicleCategory(const std::string& t) { return parseName(categoryNames(), t, "vehicle category"); }
 FuelType parseFuelType(const std::string& t) { return parseName(fuelNames(), t, "fuel type"); }
@@ -92,6 +99,7 @@ MaintenanceStatus parseMaintenanceStatus(const std::string& t) {
     return parseName(maintenanceStatusNames(), t, "maintenance status");
 }
 InvoiceStatus parseInvoiceStatus(const std::string& t) { return parseName(invoiceStatusNames(), t, "invoice status"); }
+CustomerType parseCustomerType(const std::string& t) { return parseName(customerTypeNames(), t, "customer type"); }
 
 const std::vector<VehicleCategory>& allVehicleCategories() {
     static const std::vector<VehicleCategory> v = {VehicleCategory::Car, VehicleCategory::Bike, VehicleCategory::Van};
@@ -101,6 +109,11 @@ const std::vector<VehicleCategory>& allVehicleCategories() {
 const std::vector<FuelType>& allFuelTypes() {
     static const std::vector<FuelType> v = {FuelType::Petrol, FuelType::Diesel, FuelType::CNG, FuelType::Electric,
                                             FuelType::Hybrid};
+    return v;
+}
+
+const std::vector<CustomerType>& allCustomerTypes() {
+    static const std::vector<CustomerType> v = {CustomerType::Regular, CustomerType::Premium, CustomerType::Corporate};
     return v;
 }
 

@@ -310,8 +310,8 @@ void ConsoleApp::updateCustomer() {
     const std::string phone = io_.askTextDefault("Phone", c.phone());
     const std::string email = io_.askTextDefault("Email", c.email());
     const DrivingLicence lic = askLicence(&c.licence());
-    // Validate contact first using a throw-away copy, then apply both updates.
-    Customer probe(c.id(), name, phone, email, lic);
+    // Validate contact first using a throw-away customer of the same kind, then apply both updates.
+    auto probe = CustomerFactory::create(c.type(), c.id(), name, phone, email, lic);
     sys_.customers().updateLicence(id, lic);
     sys_.customers().updateContact(id, name, phone, email);
     dataChanged();

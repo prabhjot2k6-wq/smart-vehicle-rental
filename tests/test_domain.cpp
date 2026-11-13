@@ -137,7 +137,7 @@ TEST_CASE("customers: licence category and validity through the return date") {
                     ValidationError);
     CHECK_THROWS_AS(DrivingLicence("X1", Date::parse("2030-01-01"), {}), ValidationError);
 
-    Customer c("C-0001", "Asha Rao", "+91 90000 00001", "asha@example.com", lic);
+    RegularCustomer c("C-0001", "Asha Rao", "+91 90000 00001", "asha@example.com", lic);
     CHECK_THROWS_AS(c.updateContact("Asha Rao", "12", "asha@example.com"), ValidationError);
     CHECK_THROWS_AS(c.updateContact("Asha Rao", "+91 90000 00001", "not-an-email"), ValidationError);
     CHECK_EQ(c.phone(), std::string("+91 90000 00001")); // unchanged after failed update

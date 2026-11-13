@@ -29,3 +29,9 @@ If CMake cannot find Boost, set `Boost_ROOT` to the Boost installation prefix or
 All successful writes are saved through `DataStore` to `data/rental_data.txt`. The API binds to loopback (`127.0.0.1`) only; it is intended for a local college demo, not public deployment.
 
 The frontend's monthly revenue chart remains illustrative, and some dashboard activity/report copy is presentation-only. The fleet, customer, booking, price quote, pickup/return, invoice and maintenance operations listed above use the C++ backend.
+
+## OOP extensions (Observer, customer kinds, Factory)
+- Customers now have a **type** (Regular / Premium / Corporate). Choose it in "Add a customer". Premium gets 5% and Corporate 10% off every quote, and each type has its own limit of open bookings.
+- Every booking step (confirm, extend, pickup, return, cancel) is announced to observers. The dashboard's **Recent activity** panel shows them, the server terminal prints a simulated SMS, and `data/audit_log.txt` keeps a permanent log.
+- `POST /api/customers` accepts an optional `"type"` field. `GET /api/state` now returns each customer's `type`, `discount` and `limit`, and fills `activity`.
+- Full explanation, diagrams and a demo script: `docs/OOP_EXTENSIONS.md`.

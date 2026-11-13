@@ -2,6 +2,8 @@
 #include "rental/DemoData.h"
 #include "rental/RentalSystem.h"
 #include "rental/Clock.h"
+#include "rental/AuditLogger.h"
+#include "rental/NotificationService.h"
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/asio.hpp>
@@ -20,6 +22,7 @@ using tcp=net::ip::tcp; using pt=boost::property_tree::ptree;
 static SystemClock clockSource;
 static std::unique_ptr<RentalSystem> app;
 static std::unique_ptr<DataStore> store;
+static std::shared_ptr<AuditLogger> audit; // Observer: feeds the dashboard's "Recent activity"
 static std::string get(const pt& p,const std::string& k,const std::string& d=""){return p.get<std::string>(k,d);}
 static long long num(const pt& p,const std::string& k,long long d=0){return p.get<long long>(k,d);}
 static pt arr(){return pt{};} static void push(pt& a,pt v){a.push_back({"",v});}
@@ -28,9 +31,10 @@ static pt state(){
   std::map<std::string,int> customerBookingCounts; std::set<std::string> occupied;
   for(auto b:app->rentals().bookings()){if(b->occupiesVehicle())occupied.insert(b->vehicleId());++customerBookingCounts[b->customerId()];}
   for(auto v:app->fleet().vehicles()) { const auto& m=app->fleet().modelOf(*v); pt x; x.put("id",v->id()); x.put("name",m.displayName()); x.put("type",toString(v->category())+" · "+v->specSummary()); x.put("plate",v->registration()); x.put("rate",m.baseDailyRate().paise()/100.0); x.put("status",v->status()==VehicleStatus::UnderMaintenance?"Maintenance":(v->status()==VehicleStatus::Inactive?"Inactive":(occupied.count(v->id())?"Booked":"Available"))); x.put("icon",v->category()==VehicleCategory::Bike?"🏍️":(v->category()==VehicleCategory::Van?"🚐":"🚙")); push(vehicles,x); }
-  for(auto c:app->customers().customers()){pt x;x.put("id",c->id());x.put("name",c->name());x.put("email",c->email());x.put("phone",c->phone());x.put("licence",c->licence().number());x.put("bookings",customerBookingCounts[c->id()]);push(customers,x);}
+  for(auto c:app->customers().customers()){pt x;x.put("id",c->id());x.put("name",c->name());x.put("email",c->email());x.put("phone",c->phone());x.put("licence",c->licence().number());x.put("bookings",customerBookingCounts[c->id()]);x.put("type",c->typeName());x.put("discount",c->discountBp()/100.0);x.put("limit",c->maxActiveBookings());push(customers,x);}
   for(auto b:app->rentals().bookings()){pt x;const auto& c=app->customers().customer(b->customerId());const auto& v=app->fleet().vehicle(b->vehicleId());x.put("id",b->id());x.put("customer",c.name());x.put("vehicle",app->fleet().modelOf(v).displayName());x.put("dates",b->period().start().toString()+" – "+b->period().end().toString());x.put("amount",b->agreedRentalTotal().paise()/100.0);x.put("status",toString(b->status()));push(bookings,x);}
   for(auto m:app->data().maintenance.all()){pt x;x.put("vehicle",app->fleet().modelOf(app->fleet().vehicle(m->vehicleId())).displayName());x.put("issue",m->description());x.put("date",m->openedOn().toString());x.put("cost",m->cost().paise()/100.0);x.put("status",toString(m->status()));push(maintenance,x);}
+  if(audit){for(const auto& e:audit->recent(8)){pt row;for(const std::string* part:{&e.symbol,&e.title,&e.text,&e.when}){pt cell;cell.put_value(*part);row.push_back({"",cell});}push(activity,row);}}
   root.put("revenue",app->reports().revenue(std::nullopt).total.paise()/100.0);
   root.add_child("vehicles",vehicles);root.add_child("customers",customers);root.add_child("bookings",bookings);root.add_child("maintenance",maintenance);root.add_child("activity",activity);return root;
 }
@@ -45,7 +49,7 @@ static http::response<http::string_body> handle(const http::request<http::string
   if(req.method()==http::verb::post && target=="/api/customers"){
    auto cats=std::set<VehicleCategory>{VehicleCategory::Car,VehicleCategory::Bike,VehicleCategory::Van};
    DrivingLicence lic(get(p,"licence"),Date::parse(get(p,"expiry","2035-12-31")),cats);
-   auto& c=app->customers().registerCustomer(get(p,"name"),get(p,"phone"),get(p,"email"),lic);store->save(app->data());pt out;out.put("id",c.id());return response(http::status::created,json(out));
+   auto& c=app->customers().registerCustomer(parseCustomerType(get(p,"type","Regular")),get(p,"name"),get(p,"phone"),get(p,"email"),lic);store->save(app->data());pt out;out.put("id",c.id());return response(http::status::created,json(out));
   }
   if(req.method()==http::verb::post && target=="/api/vehicles"){
    auto cat=parseVehicleCategory(get(p,"category","Car"));auto model=app->fleet().addModel(get(p,"brand","Generic"),get(p,"model",get(p,"name","Vehicle")),cat,Money::parse(get(p,"rate","1000")));
@@ -67,4 +71,4 @@ static http::response<http::string_body> handle(const http::request<http::string
  }catch(const std::exception& e){pt err;err.put("error",e.what());return response(http::status::bad_request,json(err));}
 }
 static void session(tcp::socket socket){try{beast::flat_buffer buffer;http::request<http::string_body> req;http::read(socket,buffer,req);auto res=handle(req);http::write(socket,res);beast::error_code ec;socket.shutdown(tcp::socket::shutdown_send,ec);}catch(...) {}}
-int main(int argc,char**argv){try{std::string file=argc>1?argv[1]:"data/rental_data.txt";store=std::make_unique<DataStore>(file);RentalData data;if(store->exists())data=store->load();else{ManualClock seedClock(clockSource.today());RentalSystem seed(RentalData{},seedClock);populateDemoData(seed,seedClock,clockSource.today());store->save(seed.data());data=store->load();}app=std::make_unique<RentalSystem>(std::move(data),clockSource);net::io_context ioc{1};tcp::acceptor acceptor{ioc,{net::ip::make_address("127.0.0.1"),8765}};std::cout<<"Smart Vehicle Rental API running at http://127.0.0.1:8765\n";for(;;){tcp::socket socket{ioc};acceptor.accept(socket);std::thread(session,std::move(socket)).detach();}}catch(const std::exception&e){std::cerr<<e.what()<<"\n";return 1;}}
+int main(int argc,char**argv){try{std::string file=argc>1?argv[1]:"data/rental_data.txt";store=std::make_unique<DataStore>(file);RentalData data;if(store->exists())data=store->load();else{ManualClock seedClock(clockSource.today());RentalSystem seed(RentalData{},seedClock);populateDemoData(seed,seedClock,clockSource.today());store->save(seed.data());data=store->load();}app=std::make_unique<RentalSystem>(std::move(data),clockSource);audit=std::make_shared<AuditLogger>(app->data(),std::filesystem::path(file).parent_path()/"audit_log.txt");app->rentals().addObserver(audit);app->rentals().addObserver(std::make_shared<NotificationService>(app->data(),std::cout));net::io_context ioc{1};tcp::acceptor acceptor{ioc,{net::ip::make_address("127.0.0.1"),8765}};std::cout<<"Smart Vehicle Rental API running at http://127.0.0.1:8765\n";for(;;){tcp::socket socket{ioc};acceptor.accept(socket);std::thread(session,std::move(socket)).detach();}}catch(const std::exception&e){std::cerr<<e.what()<<"\n";return 1;}}

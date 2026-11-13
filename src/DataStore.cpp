@@ -152,7 +152,7 @@ std::string DataStore::serialize(const RentalData& data) {
     }
     for (const Customer* c : data.customers.all()) {
         w.write("CUSTOMER", c->id(), c->name(), c->phone(), c->email(), c->licence().number(), c->licence().expiry(),
-                categoriesField(c->licence().permittedCategories()));
+                categoriesField(c->licence().permittedCategories()), toString(c->type()));
     }
     for (const Booking* b : data.bookings.all()) {
         w.write("BOOKING", b->id(), b->customerId(), b->vehicleId(), toString(b->status()),
@@ -373,19 +373,21 @@ void loadFleetAndCustomers(const RowsByType& rows, RentalData& data) {
                 fail(r.line, "vehicle " + d.id + " is a " + toString(category) + " but model " + d.modelId + " is a " +
                                  toString(model->category()));
             }
-            data.vehicles.add(makeVehicle(category, d, static_cast<int>(r.num(9))));
+            data.vehicles.add(VehicleFactory::instance().create(category, d, static_cast<int>(r.num(9))));
         });
     }
     std::set<std::string> licences;
     for (const Row& r : rowsOf(rows, "CUSTOMER")) {
-        r.expectFields(8);
+        // 8 fields = older files (no customer type, treated as Regular); 9 = with type.
+        if (r.f.size() != 8 && r.f.size() != 9) r.expectFields(9);
         atLine(r.line, [&] {
             std::set<VehicleCategory> cats;
             std::stringstream ss(r.s(7));
             std::string token;
             while (std::getline(ss, token, ',')) cats.insert(parseVehicleCategory(token));
-            const Customer& c =
-                data.customers.add(Customer(r.s(1), r.s(2), r.s(3), r.s(4), DrivingLicence(r.s(5), r.date(6), cats)));
+            const CustomerType kind = r.f.size() == 9 ? parseCustomerType(r.s(8)) : CustomerType::Regular;
+            const Customer& c = data.customers.add(CustomerFactory::create(
+                kind, r.s(1), r.s(2), r.s(3), r.s(4), DrivingLicence(r.s(5), r.date(6), cats)));
             if (!licences.insert(c.licence().number()).second) {
                 fail(r.line, "licence " + c.licence().number() + " is used by more than one customer");
             }

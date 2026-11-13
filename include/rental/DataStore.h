@@ -12,7 +12,7 @@
 //   backslash -> \\    TAB -> \t    newline -> \n    carriage return -> \r
 // Money is stored as integer paise, factors as integer basis points, dates as
 // YYYY-MM-DD. Derived vehicle types are rebuilt from the category field
-// through makeVehicle().
+// through VehicleFactory (and customer kinds through CustomerFactory).
 //
 // SAFE SAVING: write everything to "<file>.tmp", read it back to prove it
 // loads, then rename the old file to "<file>.bak" and the temp file to

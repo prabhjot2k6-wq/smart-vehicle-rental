@@ -10,6 +10,28 @@ std::string describeExpiry(std::int64_t expiresAt, std::int64_t now) {
 }
 } // namespace
 
+void RentalService::addObserver(std::shared_ptr<BookingObserver> observer) {
+    if (!observer) throw ValidationError("Cannot register an empty observer.");
+    observers_.push_back(std::move(observer));
+}
+
+void RentalService::notify(BookingEventKind kind, const Booking& booking, const std::string& detail) const {
+    BookingEvent event;
+    event.kind = kind;
+    event.bookingId = booking.id();
+    event.customerId = booking.customerId();
+    event.vehicleId = booking.vehicleId();
+    event.epochSeconds = clock_.nowEpochSeconds();
+    event.detail = detail;
+    for (const auto& observer : observers_) {
+        // A misbehaving observer must never break a rental that already succeeded.
+        try {
+            observer->onBookingEvent(event);
+        } catch (...) {
+        }
+    }
+}
+
 const Booking& RentalService::confirmQuote(const std::string& quoteId) {
     // The quote is consumed whether or not confirmation succeeds.
     const PriceQuote q = quotes_.takePending(quoteId);
@@ -24,12 +46,27 @@ const Booking& RentalService::confirmQuote(const std::string& quoteId) {
     customer.licence().requireCovers(vehicle.category(), period);
     availability_.requireAvailable(vehicle, period);
 
+    // Polymorphism: the limit comes from the customer's own kind.
+    int open = 0;
+    for (const Booking* b : data_.bookings.all()) {
+        if (b->customerId() == customer.id() && b->occupiesVehicle()) ++open;
+    }
+    if (open >= customer.maxActiveBookings()) {
+        throw ConflictError(customer.typeName() + " customer " + customer.name() + " already has " +
+                            std::to_string(open) + " open bookings (limit " +
+                            std::to_string(customer.maxActiveBookings()) + ").");
+    }
     // Honour the quoted price: store the breakdown exactly as quoted.
-    return data_.bookings.add(Booking(data_.ids.next("B"), q.customerId, q.vehicleId, q.breakdown, now));
+    const Booking& created =
+        data_.bookings.add(Booking(data_.ids.next("B"), q.customerId, q.vehicleId, q.breakdown, now));
+    notify(BookingEventKind::Confirmed, created, q.breakdown.total().toString());
+    return created;
 }
 
 void RentalService::cancelBooking(const std::string& bookingId) {
-    data_.bookings.get(bookingId).cancel();
+    Booking& booking = data_.bookings.get(bookingId);
+    booking.cancel();
+    notify(BookingEventKind::Cancelled, booking);
 }
 
 PriceQuote RentalService::quoteExtension(const std::string& bookingId, Date newReturnDate) const {
@@ -51,6 +88,7 @@ const Booking& RentalService::confirmExtension(const PriceQuote& q) {
     // Ignore the booking itself; any other overlapping booking is a conflict.
     availability_.requireAvailable(vehicle, q.breakdown.period(), booking.id());
     booking.addExtension(q.breakdown);
+    notify(BookingEventKind::Extended, booking, "until " + q.breakdown.period().end().toString());
     return booking;
 }
 
@@ -74,6 +112,7 @@ const Booking& RentalService::pickup(const std::string& bookingId, const Inspect
     }
     booking.recordPickup(report, vehicle.securityDeposit()); // validates the date
     vehicle.recordOdometer(report.odometerKm());
+    notify(BookingEventKind::PickedUp, booking);
     return booking;
 }
 
@@ -108,6 +147,7 @@ const Invoice& RentalService::completeReturn(const std::string& bookingId, const
     const Invoice& stored = data_.invoices.add(std::move(invoice));
     booking.recordReturn(report, stored.id());
     vehicle.recordOdometer(report.odometerKm());
+    notify(BookingEventKind::Returned, booking, "invoice " + stored.id() + ", total " + stored.totalCharges().toString());
     return stored;
 }
 

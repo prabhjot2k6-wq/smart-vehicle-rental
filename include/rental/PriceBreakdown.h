@@ -48,6 +48,13 @@ public:
         discount_ = subtotal_.applyBasisPoints(discountBp);
     }
 
+    // Loyalty discount of the customer's kind, ADDED to the duration discount.
+    // Total discount = subtotal x (duration + customer) basis points.
+    void applyCustomerDiscount(BasisPoints extraBp) {
+        discountBp_ += extraBp;
+        discount_ = subtotal_.applyBasisPoints(discountBp_);
+    }
+
 private:
     DateRange period_;
     std::string strategyName_;

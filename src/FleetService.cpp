@@ -37,14 +37,14 @@ const Vehicle& FleetService::addVehicle(const std::string& modelId, const std::s
     d.status = VehicleStatus::Active;
 
     // Validate fully (including duplicate registration) before using an ID.
-    auto probe = makeVehicle(model.category(), d, specValue);
+    auto probe = VehicleFactory::instance().create(model.category(), d, specValue);
     if (const Vehicle* other = data_.vehicles.findByRegistration(probe->registration())) {
         throw ConflictError("Registration " + probe->registration() + " is already used by vehicle " + other->id() +
                             ".");
     }
     d.id = data_.ids.next("V");
     d.nextServiceDueKm = mileageKm + probe->serviceIntervalKm();
-    return data_.vehicles.add(makeVehicle(model.category(), d, specValue));
+    return data_.vehicles.add(VehicleFactory::instance().create(model.category(), d, specValue));
 }
 
 void FleetService::updateRegistration(const std::string& vehicleId, const std::string& registration) {

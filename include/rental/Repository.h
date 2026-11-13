@@ -8,6 +8,7 @@
 // dangling pointers.
 
 #include "rental/Errors.h"
+#include "rental/Customer.h"
 #include "rental/Vehicle.h"
 
 #include <map>
@@ -88,6 +89,22 @@ public:
 
 private:
     std::map<std::string, std::unique_ptr<Vehicle>, IdLess> items_;
+};
+
+// Customers are polymorphic too (Regular / Premium / Corporate), so they are
+// stored through std::unique_ptr, exactly like vehicles.
+class CustomerRepository {
+public:
+    Customer& add(std::unique_ptr<Customer> customer);
+    Customer* find(const std::string& id);
+    const Customer* find(const std::string& id) const;
+    Customer& get(const std::string& id);
+    const Customer& get(const std::string& id) const;
+    std::vector<const Customer*> all() const;
+    std::size_t size() const { return items_.size(); }
+
+private:
+    std::map<std::string, std::unique_ptr<Customer>, IdLess> items_;
 };
 
 // Generates readable, persistent IDs: V-0001, C-0001, B-0001 ...

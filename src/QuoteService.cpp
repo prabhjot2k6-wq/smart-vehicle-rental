@@ -63,7 +63,9 @@ const PriceQuote& QuoteService::createQuote(const std::string& customerId, const
 
     const std::int64_t now = clock_.nowEpochSeconds();
     std::string id = "Q-" + std::to_string(nextQuoteNumber_++);
-    PriceQuote q{id, customerId, vehicleId, "", priceFor(vehicle, period), now, now + lifetimeSeconds()};
+    PriceBreakdown price = priceFor(vehicle, period);
+    price.applyCustomerDiscount(customer.discountBp()); // polymorphic: depends on the customer's kind
+    PriceQuote q{id, customerId, vehicleId, "", std::move(price), now, now + lifetimeSeconds()};
     return pending_.emplace(id, std::move(q)).first->second;
 }
 
@@ -83,8 +85,10 @@ PriceQuote QuoteService::createExtensionQuote(const Booking& booking, Date newRe
     availability_.requireAvailable(vehicle, extra, booking.id());
 
     const std::int64_t now = clock_.nowEpochSeconds();
+    PriceBreakdown price = priceFor(vehicle, extra, booking.id());
+    price.applyCustomerDiscount(data_.customers.get(booking.customerId()).discountBp());
     return PriceQuote{"EXT-" + booking.id(), booking.customerId(), booking.vehicleId(), booking.id(),
-                      priceFor(vehicle, extra, booking.id()), now, now + lifetimeSeconds()};
+                      std::move(price), now, now + lifetimeSeconds()};
 }
 
 const PriceQuote* QuoteService::findPending(const std::string& quoteId) const {
