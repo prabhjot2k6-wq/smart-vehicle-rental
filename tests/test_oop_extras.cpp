@@ -9,6 +9,7 @@
 #include "rental/VehicleTypes.h"
 
 #include <cstdio>
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -189,7 +190,10 @@ TEST_CASE("observer: a failed action is not announced, and a broken observer can
 
 TEST_CASE("observer: AuditLogger keeps newest-first history and writes a log file") {
     Fleet f;
-    const std::filesystem::path file = std::filesystem::temp_directory_path() / "svrms_audit_test.txt";
+    const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    const std::filesystem::path file =
+        std::filesystem::temp_directory_path() /
+        ("svrms_audit_test_" + std::to_string(stamp) + ".txt");
     std::filesystem::remove(file);
     auto audit = std::make_shared<AuditLogger>(f.sys.data(), file, 3);
     f.sys.rentals().addObserver(audit);
@@ -212,6 +216,7 @@ TEST_CASE("observer: AuditLogger keeps newest-first history and writes a log fil
     int lines = 0;
     while (std::getline(in, line)) ++lines;
     CHECK_EQ(lines, 5); // the file keeps everything
+    in.close();
     std::filesystem::remove(file);
 }
 
@@ -263,3 +268,6 @@ TEST_CASE("factory: a new creator can be registered without editing existing cla
                             [](const VehicleData& data, int spec) { return std::make_unique<Van>(data, spec); });
     CHECK_THROWS_AS(factory.registerCreator(VehicleCategory::Van, nullptr), ValidationError);
 }
+
+
+
