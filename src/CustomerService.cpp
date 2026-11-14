@@ -25,6 +25,24 @@ const Customer& CustomerService::registerCustomer(CustomerType type, const std::
                                                        probe->email(), probe->licence()));
 }
 
+void CustomerService::removeCustomer(const std::string& customerId) {
+    data_.customers.get(customerId); // Validate that the customer exists.
+    for (const Booking* booking : data_.bookings.all()) {
+        if (booking->customerId() == customerId) {
+            throw ConflictError("Customer " + customerId + " has booking history and cannot be removed.");
+        }
+    }
+    data_.customers.remove(customerId);
+}
+void CustomerService::updateDetails(const std::string& customerId, const std::string& name,
+                                    const std::string& phone, const std::string& email,
+                                    const DrivingLicence& licence) {
+    Customer& customer = data_.customers.get(customerId);
+    requireUniqueLicence(licence.number(), customerId);
+    auto validated = CustomerFactory::create(customer.type(), customerId, name, phone, email, licence);
+    customer.updateContact(validated->name(), validated->phone(), validated->email());
+    customer.replaceLicence(validated->licence());
+}
 void CustomerService::updateContact(const std::string& customerId, const std::string& name,
                                     const std::string& phone, const std::string& email) {
     data_.customers.get(customerId).updateContact(name, phone, email);
@@ -37,3 +55,5 @@ void CustomerService::updateLicence(const std::string& customerId, const Driving
 }
 
 } // namespace rental
+
+

@@ -96,6 +96,7 @@ private:
 class CustomerRepository {
 public:
     Customer& add(std::unique_ptr<Customer> customer);
+    void remove(const std::string& id);
     Customer* find(const std::string& id);
     const Customer* find(const std::string& id) const;
     Customer& get(const std::string& id);
@@ -122,3 +123,4 @@ private:
 };
 
 } // namespace rental
+

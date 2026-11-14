@@ -19,6 +19,9 @@ public:
     // Same, but for a chosen kind: Regular, Premium or Corporate.
     const Customer& registerCustomer(CustomerType type, const std::string& name, const std::string& phone,
                                      const std::string& email, const DrivingLicence& licence);
+    void removeCustomer(const std::string& customerId);
+    void updateDetails(const std::string& customerId, const std::string& name, const std::string& phone,
+                       const std::string& email, const DrivingLicence& licence);
     void updateContact(const std::string& customerId, const std::string& name, const std::string& phone,
                        const std::string& email);
     void updateLicence(const std::string& customerId, const DrivingLicence& licence);
@@ -32,3 +35,5 @@ private:
 };
 
 } // namespace rental
+
+

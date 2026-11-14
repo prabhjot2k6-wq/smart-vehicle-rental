@@ -58,6 +58,11 @@ Customer& CustomerRepository::add(std::unique_ptr<Customer> customer) {
     return *items_.emplace(id, std::move(customer)).first->second;
 }
 
+void CustomerRepository::remove(const std::string& id) {
+    const auto it = items_.find(id);
+    if (it == items_.end()) throw NotFoundError("Customer " + id + " not found.");
+    items_.erase(it);
+}
 Customer* CustomerRepository::find(const std::string& id) {
     auto it = items_.find(id);
     return it == items_.end() ? nullptr : it->second.get();
@@ -107,3 +112,4 @@ void IdGenerator::setCounter(const std::string& prefix, long long lastIssued) {
 }
 
 } // namespace rental
+
